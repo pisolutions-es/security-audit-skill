@@ -178,6 +178,15 @@ In full audit mode, follow all six phases in order:
 
 Do not end the run before one of exactly two terminal states: (a) all Phase 6 artifacts are written and both validators pass, or (b) `run_status: "incomplete"` is recorded with its exact reason and the gap is disclosed in the report. Never stop mid-phase.
 
+## Perimeter/external audit adaptation (entornos sin root)
+- Sin apt/sudo ni pip (Tirith bloquea installs e inline `python -c`): escribir scripts a ficheros bajo run-N/tools/ y ejecutarlos con `python3` del sistema; para `cryptography` usar `/opt/data/.venv-gws/bin/python`. El escáden bloquea bucles `for t in ...; do command -v` — usar listas planas.
+- DNS sin dnspython: dnsutil.py propio (query UDP + compresión de nombres; devolver offset `orig` tras pointer o los RDATA se corrompen). DNSSEC sin Quad9 UDP: validador HTTPS `dns.google/resolve?...&do=true` mirando AD.
+- SNI-correcto-IP-fija: subclase HTTPSConnection con connect() que hace wrap_socket(ctx, server_hostname=host) sobre socket a la IP; HTTPSConnection no expone `.context` — guardar el ctx en `__init__`.
+- Rutas de ficheros en scripts: `../raw/` vs `raw/` fallan según cwd; usar rutas absolutas basadas en `run-metadata.json`.
+- Severidades: verificar CVE contra el advisory del vendor ANTES de reportar versión (banner = versión FIX ≠ vulnerable; ej. SFTPGo 2.7.4 / CVE-2026-10031 afecta <2.7.4).
+- Comodín DNS * hace inútil el diccionario de subdominios: CT logs son la fuente; el default vhost K8s (fake cert CN=ingress.local) responde a SNI desconocidos.
+- Validador propio `tools/validate_run.py` (schema manual + contadores ledger↔findings) antes de cerrar run_status.
+
 ## Anti-patterns
 
 1. Checklist deviations presented as vulnerabilities.
